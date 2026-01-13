@@ -54,10 +54,10 @@ class AddDocumentsRequest(BaseModel):
 async def startup():
     """Initialize vector store on startup."""
     global vector_store, retriever
-    
+
     vector_store = VectorStore(embedding_model="all-MiniLM-L6-v2")
     retriever = RAGRetriever(vector_store, top_k=3)
-    
+
     # Try to load existing index
     try:
         vector_store.load("./data/vectorstore")
@@ -87,11 +87,11 @@ async def query(request: QueryRequest):
     """Query the RAG system."""
     if not vector_store or len(vector_store.documents) == 0:
         raise HTTPException(status_code=400, detail="No documents indexed")
-    
+
     retriever.top_k = request.top_k
     context = retriever.retrieve(request.query)
     prompt = retriever.create_prompt(request.query, request.system_prompt)
-    
+
     return QueryResponse(
         query=request.query,
         context=context,
@@ -103,11 +103,11 @@ async def query(request: QueryRequest):
 async def add_documents(request: AddDocumentsRequest):
     """Add documents to the vector store."""
     vector_store.add_documents(request.documents, request.metadata)
-    
+
     # Save updated index
     os.makedirs("./data/vectorstore", exist_ok=True)
     vector_store.save("./data/vectorstore")
-    
+
     return {
         "status": "success",
         "documents_added": len(request.documents),
@@ -120,9 +120,9 @@ async def search(query: str, k: int = 5):
     """Search for similar documents."""
     if not vector_store:
         raise HTTPException(status_code=500, detail="Vector store not initialized")
-    
+
     results = vector_store.search(query, k=k)
-    
+
     return {
         "query": query,
         "results": [
